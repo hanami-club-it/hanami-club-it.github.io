@@ -30,7 +30,7 @@
   function renderOverview() {
     if (!entries.length) {
       root.innerHTML = `
-        <div class="section__head"><h1 class="section__title"><span class="text-pink">Galleria</span></h1></div>
+        <div class="section__head"><h1 class="section__title" tabindex="-1"><span class="text-pink">Galleria</span></h1></div>
         <p class="events__empty">Le foto dei raduni arriveranno presto.</p>`;
       return;
     }
@@ -38,7 +38,7 @@
       <div class="section__head">
         <div>
           <p class="eyebrow">I nostri raduni</p>
-          <h1 class="section__title"><span class="text-pink">Galleria</span></h1>
+          <h1 class="section__title" tabindex="-1"><span class="text-pink">Galleria</span></h1>
         </div>
       </div>
       ${entries.map((entry) => `
@@ -56,7 +56,7 @@
     root.innerHTML = `
       <a class="gallery__back" href="galleria.html">← Tutti i raduni</a>
       <header class="gallery__event-head gallery__event-head--page">
-        <h1 class="gallery__event-title">${eventHeading(entry)}</h1>
+        <h1 class="gallery__event-title" tabindex="-1">${eventHeading(entry)}</h1>
         <p class="gallery__event-place">${escapeHTML(entry.event.place)} · ${entry.photos.length} foto</p>
       </header>
       <div class="gallery__grid">${thumbs(entry, entry.photos.length)}</div>`;
@@ -157,9 +157,18 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
+  // Cambio vista (link o tasto indietro): chiude il visore se aperto, così
+  // "indietro" su Android chiude la foto invece di lasciarla sopra la nuova vista,
+  // e porta il focus sul titolo della nuova vista per chi usa tastiera o screen reader
   window.addEventListener("hashchange", () => {
+    if (viewer.open) {
+      view.opener = null;
+      viewer.close();
+    }
     render();
     window.scrollTo(0, 0);
+    const title = root.querySelector("h1");
+    if (title) title.focus({ preventScroll: true });
   });
 
   F.loadManifest().then((manifest) => {
