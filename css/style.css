@@ -291,6 +291,29 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .footer__bottom a:hover { color: var(--pink); }
 
+/* ---------- Galleria ---------- */
+.gallery { padding-top: calc(var(--nav-h) + 56px); min-height: 70svh; }
+.nav__links a[aria-current="page"], .footer__links a[aria-current="page"] { color: var(--pink); }
+.gallery__event { padding: 40px 0; border-top: 1px solid var(--line); }
+.gallery__event:first-of-type { border-top: 0; padding-top: 0; }
+.gallery__event-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 20px; }
+.gallery__event-head--page { margin: 18px 0 32px; flex-direction: column; align-items: flex-start; }
+.gallery__event-title { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: clamp(20px, 2.6vw, 28px); line-height: 1.2; }
+.gallery__event-title::first-letter { text-transform: uppercase; }
+.gallery__event-place { margin: 0; color: var(--muted); font-size: 14px; }
+.gallery__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.gallery__thumb {
+  position: relative; display: block; padding: 0; border: 1px solid var(--line); border-radius: 12px;
+  overflow: hidden; background: var(--surface-2); aspect-ratio: 1;
+  transition: border-color .2s ease, transform .2s ease;
+}
+.gallery__thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
+.gallery__thumb:hover { border-color: var(--pink-line); }
+.gallery__thumb:hover img { transform: scale(1.05); }
+.gallery__more { margin-top: 20px; }
+.gallery__back { display: inline-block; color: var(--muted); font-size: 14px; font-weight: 600; transition: color .2s; }
+.gallery__back:hover { color: var(--pink); }
+
 /* ---------- Modal ---------- */
 .modal {
   width: min(520px, calc(100% - 32px)); max-height: calc(100svh - 32px);
@@ -367,6 +390,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .field-row { flex-direction: column; gap: 0; }
   .modal__body { padding: 32px 20px 24px; }
   .marquee__track { font-size: 18px; }
+  .gallery__grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .gallery { padding-top: calc(var(--nav-h) + 32px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
