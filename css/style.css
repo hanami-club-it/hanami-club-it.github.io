@@ -221,6 +221,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .event:hover { transform: translateY(-6px); border-color: var(--pink-line); box-shadow: 0 24px 60px -30px rgba(245,66,245,.6); }
 .event--past:hover { transform: none; border-color: var(--line); box-shadow: none; }
 .event--past .event__visual { filter: grayscale(1); opacity: .55; }
+.event--photo { color: inherit; }
+.event--past.event--photo .event__visual { filter: none; opacity: 1; }
+.event--past.event--photo:hover { transform: translateY(-6px); border-color: var(--pink-line); box-shadow: 0 24px 60px -30px rgba(245,66,245,.6); }
 @keyframes cardIn { from { opacity: 0; transform: translateY(16px); } }
 
 .event__visual {
@@ -228,6 +231,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
   background: var(--surface-2);
 }
 .event__visual svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.event__cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
+.event--photo:hover .event__cover { transform: scale(1.04); }
 .event__date {
   position: absolute; left: 16px; top: 16px;
   display: flex; flex-direction: column; align-items: center;

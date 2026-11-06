@@ -25,42 +25,7 @@
     termsValue: "Accetto il regolamento dell'evento e le norme di controllo sicurezza.",
   };
 
-  /* ---------- Dati eventi ----------
-     Per aggiungere un raduno basta aggiungere un oggetto qui.
-     I raduni con data futura finiscono in "Prossimi eventi" (con iscrizione),
-     quelli già passati in "Eventi passati". L'ordine non conta.
-     price è facoltativo: 0 = "Gratis", omesso = non mostrato.
-  */
-  const EVENTS = [
-    {
-      id: "raduno-2026-10-23",
-      title: "Raduno",
-      start: "2026-10-23T20:30:00",
-      end: "00:00",
-      place: "Viale Milano 35/37, Gallarate",
-    },
-    {
-      id: "raduno-2026-10-04",
-      title: "Raduno",
-      start: "2026-10-04T20:30:00",
-      end: "00:00",
-      place: "Viale Milano 35/37, Gallarate",
-    },
-    {
-      id: "raduno-2026-05-29",
-      title: "Raduno",
-      start: "2026-05-29T20:30:00",
-      end: "00:00",
-      place: "Viale Milano 35/37, Gallarate",
-    },
-    {
-      id: "raduno-2026-04-07",
-      title: "Raduno",
-      start: "2026-04-07T20:30:00",
-      end: "00:00",
-      place: "Viale Milano 35/37, Gallarate",
-    },
-  ];
+  const EVENTS = window.HANAMI_EVENTS || [];
 
   /* ---------- Storage sicuro ---------- */
   const store = {
@@ -124,7 +89,37 @@
     return `<span class="event__price">${e.price === 0 ? "Gratis" : `€${e.price} <small>a persona</small>`}</span>`;
   }
 
+  // Foto per data (da foto/foto.json); vuoto finché il manifest non è caricato
+  const FOTO = window.HANAMI_FOTO;
+  let photoEntries = [];
+
+  function pastPhotoCard(e, i, entry) {
+    const d = new Date(e.start);
+    const cover = entry.photos[0];
+    return `
+      <a class="event event--past event--photo" href="galleria.html#${entry.date}" style="animation-delay:${i * 60}ms"
+         aria-label="Foto del raduno del ${fmtLong.format(d)}">
+        <div class="event__visual">
+          <img class="event__cover" src="${FOTO.thumbUrl(entry.date, cover)}" alt="" width="${cover.tw}" height="${cover.th}" loading="lazy" decoding="async">
+          <div class="event__date"><strong>${fmtDay.format(d)}</strong><span>${fmtMonth.format(d).replace(".", "")}</span></div>
+          <span class="tag">📷 ${entry.photos.length} foto</span>
+        </div>
+        <div class="event__body">
+          <h3 class="event__title">${escapeHTML(e.title)}</h3>
+          <ul class="event__info">
+            <li>${ICON_CAL}<span>${fmtLong.format(d)}</span></li>
+            <li>${ICON_CLOCK}<span>${fmtTime.format(d)} – ${escapeHTML(e.end)}</span></li>
+            <li>${ICON_PIN}<span>${escapeHTML(e.place)}</span></li>
+          </ul>
+        </div>
+      </a>`;
+  }
+
   function eventCard(e, i, past) {
+    if (past && FOTO) {
+      const entry = FOTO.entryForDate(photoEntries, FOTO.eventDate(e));
+      if (entry) return pastPhotoCard(e, i, entry);
+    }
     const d = new Date(e.start);
     let foot = "";
     if (!past) {
@@ -396,5 +391,11 @@
   /* ---------- Init ---------- */
   document.getElementById("year").textContent = new Date().getFullYear();
   renderEvents();
+  if (FOTO) {
+    FOTO.loadManifest().then((manifest) => {
+      photoEntries = FOTO.galleryEntries(EVENTS, manifest);
+      if (photoEntries.length) renderEvents();
+    });
+  }
   petals();
 })();
