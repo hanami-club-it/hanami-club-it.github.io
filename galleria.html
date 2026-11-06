@@ -58,6 +58,17 @@
     </div>
   </footer>
 
+  <!-- VISORE -->
+  <dialog class="viewer" id="viewer" aria-label="Foto">
+    <button class="viewer__btn viewer__close" type="button" aria-label="Chiudi">×</button>
+    <figure class="viewer__stage">
+      <img class="viewer__img" id="viewerImg" alt="">
+    </figure>
+    <button class="viewer__btn viewer__prev" type="button" aria-label="Foto precedente">‹</button>
+    <button class="viewer__btn viewer__next" type="button" aria-label="Foto successiva">›</button>
+    <p class="viewer__count" id="viewerCount" aria-live="polite"></p>
+  </dialog>
+
   <script src="js/nav.js"></script>
   <script src="js/eventi.js"></script>
   <script src="js/foto.js"></script>

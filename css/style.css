@@ -314,6 +314,31 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .gallery__back { display: inline-block; color: var(--muted); font-size: 14px; font-weight: 600; transition: color .2s; }
 .gallery__back:hover { color: var(--pink); }
 
+/* ---------- Visore ---------- */
+.viewer {
+  width: 100vw; height: 100svh; max-width: none; max-height: none; margin: 0; padding: 0;
+  border: 0; background: rgba(0,0,0,.92); color: var(--text);
+}
+.viewer[open] { display: grid; grid-template-rows: 64px 1fr 56px; place-items: center; animation: modalIn .25s ease; }
+.viewer::backdrop { background: rgba(0,0,0,.6); }
+.viewer__stage { grid-row: 2; margin: 0; width: 100%; height: 100%; display: grid; place-items: center; padding: 0 72px; min-height: 0; }
+.viewer__img {
+  max-width: 100%; max-height: calc(100svh - 120px); width: auto; height: auto; object-fit: contain;
+  border-radius: 8px; user-select: none; touch-action: pan-y pinch-zoom;
+}
+.viewer__count { grid-row: 3; margin: 0; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.viewer__btn {
+  display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%;
+  border: 1px solid var(--line); background: rgba(10,10,12,.7); font-size: 28px; line-height: 1;
+  transition: border-color .2s, color .2s, opacity .2s;
+}
+.viewer__btn:hover { border-color: var(--pink); color: var(--pink); }
+.viewer__btn:disabled { opacity: .25; pointer-events: none; }
+.viewer__close { position: absolute; top: 12px; right: 16px; font-size: 24px; }
+.viewer__prev, .viewer__next { position: absolute; top: 50%; transform: translateY(-50%); }
+.viewer__prev { left: 16px; }
+.viewer__next { right: 16px; }
+
 /* ---------- Modal ---------- */
 .modal {
   width: min(520px, calc(100% - 32px)); max-height: calc(100svh - 32px);
@@ -392,6 +417,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .marquee__track { font-size: 18px; }
   .gallery__grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .gallery { padding-top: calc(var(--nav-h) + 32px); }
+  .viewer__stage { padding: 0 8px; }
+  .viewer__prev, .viewer__next { top: auto; bottom: 4px; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
