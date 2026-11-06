@@ -110,6 +110,30 @@ class ProcessDateTest(TempDirTest):
         self.assertEqual(files, ["001.webp", "002.webp"])
         self.assertEqual(len(entry["photos"]), 2)
 
+    def test_process_date_interrupted_keeps_published_folder(self):
+        for name in ["a.jpg", "b.jpg"]:
+            make_jpeg(self.src / name)
+        pf.process_date(self.src, self.out, "2026-10-23")
+        make_jpeg(self.src / "c.jpg")
+        calls = {"n": 0}
+        original = pf._save_webp
+
+        def boom(*args, **kwargs):
+            calls["n"] += 1
+            if calls["n"] == 3:  # a metà della seconda foto
+                raise KeyboardInterrupt
+            return original(*args, **kwargs)
+
+        pf._save_webp = boom
+        try:
+            with self.assertRaises(KeyboardInterrupt):
+                pf.process_date(self.src, self.out, "2026-10-23")
+        finally:
+            pf._save_webp = original
+        files = sorted(p.name for p in (self.out / "2026-10-23" / "grandi").iterdir())
+        self.assertEqual(files, ["001.webp", "002.webp"])
+        self.assertEqual(sorted(p.name for p in self.out.iterdir()), ["2026-10-23"])
+
     def test_process_date_corrupt_file_warns_and_continues(self):
         self.src.mkdir(parents=True)
         (self.src / "rotto.jpg").write_bytes(os.urandom(2048))
@@ -165,6 +189,26 @@ class MainTest(TempDirTest):
         self.assertIn("nessun raduno", out)
         manifest = json.loads((self.out / "foto.json").read_text())
         self.assertIn("2025-01-01", manifest)
+
+    def test_main_interrupted_keeps_manifest_of_finished_dates(self):
+        src = self.tmp / "src"
+        make_jpeg(src / "2026-10-04" / "a.jpg")
+        make_jpeg(src / "2026-10-23" / "a.jpg")
+        original = pf.process_date
+
+        def boom(folder, out_root, date):
+            if date == "2026-10-23":
+                raise KeyboardInterrupt
+            return original(folder, out_root, date)
+
+        pf.process_date = boom
+        try:
+            with contextlib.redirect_stdout(io.StringIO()), self.assertRaises(KeyboardInterrupt):
+                pf.main([str(src), "--out", str(self.out), "--eventi", str(self.tmp / "manca.js")])
+        finally:
+            pf.process_date = original
+        manifest = json.loads((self.out / "foto.json").read_text())
+        self.assertIn("2026-10-04", manifest)
 
     def test_main_missing_source_returns_1(self):
         buf = io.StringIO()

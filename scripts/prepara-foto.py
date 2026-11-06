@@ -73,13 +73,27 @@ def _save_webp(img: Image.Image, dest: Path, spec) -> tuple:
 
 
 def process_date(src: Path, out_root: Path, date: str):
-    """Rigenera out_root/<date>/ dalle foto di src. Ritorna (voce manifest | None, avvisi)."""
+    """Rigenera out_root/<date>/ dalle foto di src. Ritorna (voce manifest | None, avvisi).
+
+    Le foto vengono preparate in una cartella temporanea e sostituiscono quelle
+    pubblicate solo a lavoro finito: se lo script si interrompe, la galleria
+    online resta com'era.
+    """
     warnings = []
-    dest = out_root / date
+    final = out_root / date
+    dest = out_root / f".{date}.tmp"
     if dest.exists():
         shutil.rmtree(dest)
     (dest / "grandi").mkdir(parents=True)
     (dest / "mini").mkdir(parents=True)
+    try:
+        return _fill(src, dest, final, warnings)
+    finally:
+        if dest.exists():
+            shutil.rmtree(dest)
+
+
+def _fill(src: Path, dest: Path, final: Path, warnings: list):
 
     for p in src.iterdir():
         if p.is_file() and not p.name.startswith(".") and p.suffix.lower() not in IMAGE_EXTS:
@@ -98,9 +112,11 @@ def process_date(src: Path, out_root: Path, date: str):
                 continue
             photos.append({"file": name, "w": w, "h": h, "tw": tw, "th": th})
 
+    if final.exists():
+        shutil.rmtree(final)
     if not photos:
-        shutil.rmtree(dest)
         return None, warnings
+    dest.rename(final)
     return {"cover": 0, "photos": photos}, warnings
 
 
@@ -154,7 +170,6 @@ def main(argv) -> int:
         for missing in sorted(wanted - {p.name for p in folders}):
             print(f"{missing}: cartella non trovata in {args.sorgente}")
 
-    entries = {}
     for folder in folders:
         if not DATE_RE.match(folder.name):
             print(f"{folder.name}: saltata (il nome deve essere una data AAAA-MM-GG)")
@@ -165,13 +180,12 @@ def main(argv) -> int:
         entry, warnings = process_date(folder, args.out, date)
         for w in warnings:
             print(f"{date}: {w}")
-        entries[date] = entry
+        update_manifest(args.out, {date: entry})  # subito: un'interruzione non lascia il manifest indietro
         if entry is None:
             print(f"{date}: nessuna foto valida, data rimossa dalla galleria")
         else:
             print(f"{date}: {len(entry['photos'])} foto, {_size_mb(args.out / date):.1f} MB")
 
-    update_manifest(args.out, entries)
     print(f"Totale foto/: {_size_mb(args.out):.1f} MB")
     return 0
 
