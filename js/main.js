@@ -6,6 +6,25 @@
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  /* ---------- Google Form iscrizioni ----------
+     Le iscrizioni dal modale vengono inviate a questo Google Form.
+     Gli ID "entry.N" si leggono dal link precompilato del form.
+     Le opzioni (ruolo, regolamento) devono coincidere carattere per
+     carattere con quelle del form, altrimenti Google scarta la risposta.
+  */
+  const GOOGLE_FORM = {
+    action: "https://docs.google.com/forms/d/e/1FAIpQLSeIfJsyfQRoNb-WZJqBc1h9cee6qH4RKsm8_v2-BzTtJtYR5Q/formResponse",
+    fields: {
+      event: "entry.691811434",
+      name: "entry.1024230649",
+      email: "entry.378858091",
+      car: "entry.1673246653",
+      role: "entry.1126059279",
+      terms: "entry.1482558823",
+    },
+    termsValue: "Accetto il regolamento dell'evento e le norme di controllo sicurezza.",
+  };
+
   /* ---------- Dati eventi ----------
      Per aggiungere un evento basta aggiungere un oggetto qui.
      type: track | raduno | drift | coffee | touge
@@ -285,8 +304,29 @@
   // Chiudi cliccando sul backdrop
   modal.addEventListener("click", (ev) => { if (ev.target === modal) modal.close(); });
 
-  regForm.addEventListener("submit", (ev) => {
+  const fmtShort = new Intl.DateTimeFormat("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+  // Invia l'iscrizione al Google Form. Con mode "no-cors" la risposta è
+  // opaca: la promise fallisce solo per errori di rete, non se Google
+  // rifiuta i dati (per questo i valori devono combaciare con il form).
+  function sendToGoogleForm(event, data) {
+    const f = GOOGLE_FORM.fields;
+    const body = new URLSearchParams();
+    body.append(f.event, `${event.title} · ${fmtShort.format(new Date(event.start))} [${event.id}]`);
+    body.append(f.name, data.get("name").toString().trim());
+    body.append(f.email, data.get("email").toString().trim());
+    body.append(f.car, data.get("car").toString().trim());
+    body.append(f.role, data.get("role").toString());
+    body.append(f.terms, GOOGLE_FORM.termsValue);
+    return fetch(GOOGLE_FORM.action, { method: "POST", mode: "no-cors", body });
+  }
+
+  const regSubmit = regForm.querySelector('button[type="submit"]');
+  let sending = false;
+
+  regForm.addEventListener("submit", async (ev) => {
     ev.preventDefault();
+    if (sending) return;
     let firstInvalid = null;
     regForm.querySelectorAll("input[required]").forEach((input) => {
       const ok = input.type === "checkbox" ? input.checked : input.checkValidity() && input.value.trim() !== "";
@@ -301,14 +341,30 @@
       return;
     }
 
-    // Qui andrebbe la chiamata al backend (es. fetch POST /api/registrations)
-    registered.add(activeEvent.id);
-    store.set("hanami:registered", [...registered]);
-    if (activeEvent.taken < activeEvent.spots) activeEvent.taken += 1;
+    const data = new FormData(regForm);
+    const event = activeEvent;
+    regError.textContent = "";
+    sending = true;
+    regSubmit.disabled = true;
+    regSubmit.textContent = "Invio…";
+    try {
+      await sendToGoogleForm(event, data);
+    } catch {
+      regError.textContent = "Invio non riuscito. Controlla la connessione e riprova.";
+      return;
+    } finally {
+      sending = false;
+      regSubmit.disabled = false;
+      regSubmit.textContent = "Conferma iscrizione";
+    }
 
-    const name = new FormData(regForm).get("name").toString().trim().split(" ")[0];
+    registered.add(event.id);
+    store.set("hanami:registered", [...registered]);
+    if (event.taken < event.spots) event.taken += 1;
+
+    const name = data.get("name").toString().trim().split(" ")[0];
     document.getElementById("successText").textContent =
-      `Ciao ${name}, sei iscritto a "${activeEvent.title}". Ti abbiamo inviato una mail con tutti i dettagli.`;
+      `Ciao ${name}, abbiamo ricevuto la tua iscrizione a "${event.title}". Ti scriveremo all'indirizzo indicato con tutti i dettagli.`;
     modalFormView.hidden = true;
     modalSuccessView.hidden = false;
     renderEvents();

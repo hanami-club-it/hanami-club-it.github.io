@@ -415,6 +415,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .modal__body { padding: 36px 32px 32px; }
 .modal__title { margin: 0 0 6px; font-family: var(--font-display); font-size: 24px; line-height: 1.2; padding-right: 40px; }
 .modal__meta { margin: 0 0 24px; color: var(--muted); font-size: 14px; }
+.modal__note { margin: 12px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
 .modal__success { text-align: center; }
 .modal__success p { color: var(--muted); margin: 0 0 24px; }
 .modal__check {
